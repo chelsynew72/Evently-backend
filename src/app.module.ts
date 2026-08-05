@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import configuration from './config/configuration';
 import { PrismaModule } from './prisma/prisma.module';
+import { RedisModule } from './redis/redis.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { VerificationModule } from './verification/verification.module';
@@ -19,9 +21,20 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
     // App-wide default rate limit; individual routes (like OTP send) set
-    // stricter limits with @Throttle(...).
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
+    // stricter limits with @Throttle(...). Backed by Redis (not the
+    // in-memory default) so the limit is shared correctly across every
+    // instance once this API is scaled horizontally behind a load
+    // balancer — otherwise each instance would enforce the limit
+    // independently and the real limit would be (limit × instance count).
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        throttlers: [{ ttl: 60_000, limit: 100 }],
+        storage: new ThrottlerStorageRedisService(configService.get<string>('redis.url')!),
+      }),
+    }),
     PrismaModule,
+    RedisModule,
     AuthModule,
     UsersModule,
     VerificationModule,

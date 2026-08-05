@@ -1,12 +1,25 @@
 import { Injectable } from '@nestjs/common';
 import { EventStatus, OrderStatus, TicketStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from '../redis/redis.service';
+
+// Creators check this far more often than they publish/sell, and expect
+// fresher numbers than public discovery pages — short TTL, still enough
+// to absorb a dashboard being left open and polling/refreshing.
+const DASHBOARD_CACHE_TTL_SECONDS = 30;
 
 @Injectable()
 export class DashboardService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private redis: RedisService,
+  ) {}
 
   async getSummary(creatorId: string) {
+    const cacheKey = `dashboard:summary:${creatorId}`;
+    const cached = await this.redis.get(cacheKey);
+    if (cached) return cached;
+
     const [events, revenueResult, ticketsSold, upcomingEvents] = await Promise.all([
       this.prisma.event.count({ where: { creatorId } }),
 
@@ -29,12 +42,14 @@ export class DashboardService {
       }),
     ]);
 
-    return {
+    const summary = {
       totalEvents: events,
       totalRevenue: revenueResult._sum.totalAmount ?? 0,
       totalTicketsSold: ticketsSold,
       upcomingEvents,
     };
+    await this.redis.set(cacheKey, summary, DASHBOARD_CACHE_TTL_SECONDS);
+    return summary;
   }
 
   async getEventStats(eventId: string, creatorId: string) {

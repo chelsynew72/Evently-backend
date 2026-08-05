@@ -22,4 +22,7 @@ export default () => ({
     origin: process.env.CORS_ORIGIN ?? '*',
   },
   qrSigningSecret: process.env.QR_SIGNING_SECRET,
+  redis: {
+    url: process.env.REDIS_URL,
+  },
 });
