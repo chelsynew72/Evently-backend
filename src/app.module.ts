@@ -20,7 +20,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
-    // App-wide default rate limit; individual routes (like OTP send) set
+    // App-wide default rate limit; individual routes (like email code send) set
     // stricter limits with @Throttle(...). Backed by Redis (not the
     // in-memory default) so the limit is shared correctly across every
     // instance once this API is scaled horizontally behind a load

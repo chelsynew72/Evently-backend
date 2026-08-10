@@ -42,9 +42,9 @@ enum TicketStatus {
 
 model User {
   id               String   @id @default(uuid())
-  phoneNumber      String   @unique
+  email            String   @unique
   fullName         String?
-  email            String?
+  country          String?
   role             UserRole @default(ATTENDEE)
   profileImageUrl  String?
   createdAt        DateTime @default(now())
@@ -57,18 +57,18 @@ model User {
   tickets               Ticket[]             @relation("AttendeeTickets")
   checkedInTickets      Ticket[]             @relation("CheckedInBy")
 
-  @@index([phoneNumber])
+  @@index([email])
 }
 
-model OtpCode {
+model EmailCode {
   id          String   @id @default(uuid())
-  phoneNumber String
+  email       String
   codeHash    String
   expiresAt   DateTime
   attempts    Int      @default(0)
   createdAt   DateTime @default(now())
 
-  @@index([phoneNumber])
+  @@index([email])
 }
 
 model RefreshToken {
