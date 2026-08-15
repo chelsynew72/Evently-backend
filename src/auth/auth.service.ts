@@ -7,12 +7,12 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-import { compareOtp, generateOtp, hashOtp } from '../common/utils/otp.util';
-import { SendOtpDto } from './dto/send-otp.dto';
-import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { compareCode, generateCode, hashCode } from '../common/utils/code.util';
+import { SendEmailCodeDto } from './dto/send-email-code.dto';
+import { VerifyEmailCodeDto } from './dto/verify-email-code.dto';
 
-const OTP_EXPIRY_MINUTES = 5;
-const MAX_OTP_ATTEMPTS = 5;
+const EMAIL_CODE_EXPIRY_MINUTES = 5;
+const MAX_EMAIL_CODE_ATTEMPTS = 5;
 
 @Injectable()
 export class AuthService {
@@ -22,56 +22,56 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  async sendOtp({ phoneNumber }: SendOtpDto) {
-    const code = generateOtp();
-    const codeHash = await hashOtp(code);
-    const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+  async sendEmailCode({ email }: SendEmailCodeDto) {
+    const code = generateCode();
+    const codeHash = await hashCode(code);
+    const expiresAt = new Date(Date.now() + EMAIL_CODE_EXPIRY_MINUTES * 60 * 1000);
 
-    await this.prisma.otpCode.create({
-      data: { phoneNumber, codeHash, expiresAt },
+    await this.prisma.emailCode.create({
+      data: { email, codeHash, expiresAt },
     });
 
-    // No real SMS provider wired up yet (keeping this free-tier for now).
-    // Swap this line for a Twilio/Vonage call later — everything else in
-    // the OTP flow stays the same.
+    // No real email provider wired up yet (keeping this free-tier for now).
+    // Swap this line for a Nodemailer/SendGrid call later — everything else in
+    // the email code flow stays the same.
     // eslint-disable-next-line no-console
-    console.log(`[DEV ONLY] OTP for ${phoneNumber}: ${code}`);
+    console.log(`[DEV ONLY] Email code for ${email}: ${code}`);
 
-    return { message: 'OTP sent successfully' };
+    return { message: 'Email code sent successfully' };
   }
 
-  async verifyOtp({ phoneNumber, otp, userRole }: VerifyOtpDto) {
-    const otpRecord = await this.prisma.otpCode.findFirst({
-      where: { phoneNumber },
+  async verifyEmailCode({ email, code, userRole, fullName, country }: VerifyEmailCodeDto) {
+    const emailCodeRecord = await this.prisma.emailCode.findFirst({
+      where: { email },
       orderBy: { createdAt: 'desc' },
     });
 
-    if (!otpRecord) {
-      throw new BadRequestException('No OTP was requested for this phone number');
+    if (!emailCodeRecord) {
+      throw new BadRequestException('No email code was requested for this email address');
     }
-    if (otpRecord.expiresAt < new Date()) {
-      throw new BadRequestException('OTP has expired, please request a new one');
+    if (emailCodeRecord.expiresAt < new Date()) {
+      throw new BadRequestException('Email code has expired, please request a new one');
     }
-    if (otpRecord.attempts >= MAX_OTP_ATTEMPTS) {
-      throw new BadRequestException('Too many incorrect attempts, please request a new OTP');
+    if (emailCodeRecord.attempts >= MAX_EMAIL_CODE_ATTEMPTS) {
+      throw new BadRequestException('Too many incorrect attempts, please request a new email code');
     }
 
-    const isValid = await compareOtp(otp, otpRecord.codeHash);
+    const isValid = await compareCode(code, emailCodeRecord.codeHash);
     if (!isValid) {
-      await this.prisma.otpCode.update({
-        where: { id: otpRecord.id },
+      await this.prisma.emailCode.update({
+        where: { id: emailCodeRecord.id },
         data: { attempts: { increment: 1 } },
       });
-      throw new BadRequestException('Incorrect OTP');
+      throw new BadRequestException('Incorrect email code');
     }
 
-    // OTP is single-use — consume it now that it's verified.
-    await this.prisma.otpCode.delete({ where: { id: otpRecord.id } });
+    // Email code is single-use — consume it now that it's verified.
+    await this.prisma.emailCode.delete({ where: { id: emailCodeRecord.id } });
 
-    let user = await this.prisma.user.findUnique({ where: { phoneNumber } });
+    let user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
       user = await this.prisma.user.create({
-        data: { phoneNumber, role: userRole },
+        data: { email, role: userRole, fullName, country },
       });
     }
 

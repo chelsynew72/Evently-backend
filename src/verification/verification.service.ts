@@ -64,7 +64,7 @@ export class VerificationService {
   async listPending() {
     return this.prisma.creatorVerification.findMany({
       where: { status: VerificationStatus.PENDING },
-      include: { user: { select: { id: true, phoneNumber: true, fullName: true } } },
+      include: { user: { select: { id: true, email: true, fullName: true } } },
       orderBy: { submittedAt: 'asc' },
     });
   }

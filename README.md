@@ -5,7 +5,7 @@ NestJS + PostgreSQL (Neon) API for the Evently event discovery and ticketing pla
 ## Stack
 - NestJS + TypeScript
 - Prisma ORM → PostgreSQL (Neon free tier)
-- JWT auth (access + refresh) over phone OTP
+- JWT auth (access + refresh) over email code
 - Cloudinary (free tier) for private ID-card/selfie storage
 - Stripe **test mode** for payments (free, no real charges)
 
@@ -62,9 +62,10 @@ npx prisma studio
 ```
 Open the `User` table, find your user, change `role` to `ADMIN`, save.
 
-## OTP delivery (dev mode)
+# Evently Backend
+## Email code delivery (dev mode)
 
-No SMS provider is wired up yet — the OTP code is printed to the server console when `/auth/send-otp` is called, so you can log in during development without paying for SMS. Swap the `console.log` in `src/auth/auth.service.ts` for a real provider (Twilio, Vonage, etc.) when you're ready to ship.
+No email provider is wired up yet — the email code is printed to the server console when `/auth/send-email-code` is called, so you can log in during development without paying for email services. Swap the `console.log` in `src/auth/auth.service.ts` for a real provider (Nodemailer, SendGrid, etc.) when you're ready to ship.
 
 ## Known limitations to revisit later
 - **Creator identity verification is manual**, not automated biometric matching — this was a deliberate choice to stay free-tier (real KYC APIs are paid). The pipeline (upload → pending → admin approve/reject) is fully wired, so plugging in an automated pre-check later (e.g. AWS Rekognition's 12-month free tier) is additive, not a rewrite.
