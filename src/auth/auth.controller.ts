@@ -5,12 +5,24 @@ import { AuthService } from './auth.service';
 import { SendEmailCodeDto } from './dto/send-email-code.dto';
 import { VerifyEmailCodeDto } from './dto/verify-email-code.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { SignupDto } from './dto/signup.dto';
+import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  @Post('signup')
+  signup(@Body() dto: SignupDto) {
+    return this.authService.signup(dto);
+  }
+
+  @Post('login')
+  login(@Body() dto: LoginDto) {
+    return this.authService.login(dto);
+  }
 
   // Tightly rate-limited: Email code sends are the classic email bombing abuse
   // vector, so this route gets a stricter limit than the app default.

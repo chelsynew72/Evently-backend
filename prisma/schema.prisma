@@ -47,6 +47,7 @@ model User {
   country          String?
   role             UserRole @default(ATTENDEE)
   profileImageUrl  String?
+  passwordHash     String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

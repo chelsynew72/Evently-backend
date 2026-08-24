@@ -25,4 +25,8 @@ export default () => ({
   redis: {
     url: process.env.REDIS_URL,
   },
+  gmail: {
+    user: process.env.GMAIL_USER,
+    appPassword: process.env.GMAIL_APP_PASSWORD,
+  },
 });

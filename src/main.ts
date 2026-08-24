@@ -1,9 +1,9 @@
-import 'reflect-metadata';
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import helmet from 'helmet';
-import { AppModule } from './app.module';
+import "reflect-metadata";
+import { NestFactory } from "@nestjs/core";
+import { ValidationPipe } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import helmet from "helmet";
+import { AppModule } from "./app.module";
 
 async function bootstrap() {
   // rawBody: true is required so the Stripe webhook controller can verify
@@ -16,7 +16,7 @@ async function bootstrap() {
   app.use(helmet());
 
   app.enableCors({
-    origin: configService.get<string>('cors.origin'),
+    origin: configService.get<string>("cors.origin"),
     credentials: true,
   });
 
@@ -28,12 +28,16 @@ async function bootstrap() {
     }),
   );
 
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix("api/v1");
 
-  const port = configService.get<number>('port') ?? 3000;
-  await app.listen(port);
+  const port = configService.get<number>("port") ?? 3000;
+  await app.listen(port, "0.0.0.0");
   // eslint-disable-next-line no-console
-  console.log(`Evently API running on http://localhost:${port}/api/v1`);
+  console.log(`Evently API running on http://0.0.0.0:${port}/api/v1`);
+  console.log(
+    `Accessible on your network at http://192.168.1.246:${port}/api/v1`,
+  );
+  console.log("Server running on http://10.168.171.206:3000");
 }
 
 bootstrap();

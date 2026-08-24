@@ -14,6 +14,7 @@ import { TicketingModule } from './ticketing/ticketing.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { CheckinModule } from './checkin/checkin.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { EmailModule } from './email/email.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
@@ -43,6 +44,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     TicketsModule,
     CheckinModule,
     DashboardModule,
+    EmailModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

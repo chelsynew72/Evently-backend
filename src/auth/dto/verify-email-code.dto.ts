@@ -1,4 +1,4 @@
-import { IsIn, IsEmail, IsString, Length, IsNotEmpty } from 'class-validator';
+import { IsIn, IsEmail, IsString, Length, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
 import { UserRole } from '@prisma/client';
 
 // Deliberately NOT the full UserRole enum — ADMIN must never be
@@ -21,6 +21,11 @@ export class VerifyEmailCodeDto {
   @IsNotEmpty()
   @IsString()
   country: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  password?: string;
 
   // Only meaningful on first-ever verification (account creation); ignored
   // for existing users, whose role was already set at signup.
