@@ -19,7 +19,9 @@ export default () => ({
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
   },
   cors: {
-    origin: process.env.CORS_ORIGIN ?? '*',
+    // Never default to '*' — combined with credentials: true that is a
+    // misconfiguration waiting to happen. Match the local dev default.
+    origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
   },
   qrSigningSecret: process.env.QR_SIGNING_SECRET,
   redis: {

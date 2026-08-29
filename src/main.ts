@@ -15,8 +15,16 @@ async function bootstrap() {
 
   app.use(helmet());
 
+  // CORS_ORIGIN may be a single origin or a comma-separated list. Splitting
+  // into an array lets enableCors accept multiple allowed origins; the
+  // config default is a concrete localhost origin (never '*').
+  const corsOrigin = (configService.get<string>("cors.origin") ?? "http://localhost:3000")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: configService.get<string>("cors.origin"),
+    origin: corsOrigin,
     credentials: true,
   });
 
@@ -34,10 +42,6 @@ async function bootstrap() {
   await app.listen(port, "0.0.0.0");
   // eslint-disable-next-line no-console
   console.log(`Evently API running on http://0.0.0.0:${port}/api/v1`);
-  console.log(
-    `Accessible on your network at http://192.168.1.246:${port}/api/v1`,
-  );
-  console.log("Server running on http://10.168.171.206:3000");
 }
 
 bootstrap();

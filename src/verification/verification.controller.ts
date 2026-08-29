@@ -11,6 +11,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import type { Multer } from 'multer';
 import { VerificationService } from './verification.service';
 import { RejectVerificationDto } from './dto/reject-verification.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -21,6 +22,21 @@ import { UserRole } from '@prisma/client';
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png'];
+
+/** JPEG magic bytes: FF D8 FF. The client-supplied mimetype is spoofable,
+ * so we validate the actual file content here. */
+function isJpeg(buf: Buffer): boolean {
+  return buf.length > 2 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+}
+
+/** PNG magic bytes: 89 50 4E 47 0D 0A 1A 0A. */
+function isPng(buf: Buffer): boolean {
+  return (
+    buf.length > 7 &&
+    buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47 &&
+    buf[4] === 0x0d && buf[5] === 0x0a && buf[6] === 0x1a && buf[7] === 0x0a
+  );
+}
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('verification')
@@ -52,6 +68,10 @@ export class VerificationController {
     for (const file of [idCard, selfie]) {
       if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
         throw new BadRequestException('Only JPEG and PNG images are accepted');
+      }
+      // mimetype is client-supplied and can be forged — verify magic bytes.
+      if (!isJpeg(file.buffer) && !isPng(file.buffer)) {
+        throw new BadRequestException('Uploaded file is not a valid JPEG or PNG image');
       }
     }
 

@@ -14,11 +14,13 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } }) // 5 signups / min per IP
   @Post('signup')
   signup(@Body() dto: SignupDto) {
     return this.authService.signup(dto);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60_000 } }) // 10 attempts / min per IP
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
