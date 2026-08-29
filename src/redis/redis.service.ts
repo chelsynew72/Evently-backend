@@ -39,6 +39,7 @@ export class RedisService implements OnModuleDestroy {
       this.logger.warn(`Redis SET failed for key "${key}": ${(err as Error).message}`);
     }
   }
+  
 
   async del(pattern: string): Promise<void> {
     try {
